@@ -100,13 +100,48 @@ func loginAuth(w http.ResponseWriter, r *http.Request){
 }
 
 func orderList(w http.ResponseWriter, r *http.Request){
+    pg_con_string := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",host, port, user, password, dbname)
+    db, err := sqlx.Connect("postgres", pg_con_string)
+    if err != nil {
+        log.Fatalln(err)
+    }
+
+    requestOrder := []entity_model.Request_order{}
+    err = db.Select(&requestOrder, "SELECT id, chat_id, message, create_order, is_process, is_delete FROM request_order WHERE is_process = $1 ", 0)
+    if err != nil {
+        fmt.Println(err)
+    }
+    w.Header().Set("Content-Type", "application/json")
+    jsonInBytes, _ := json.Marshal(requestOrder)
+    w.Write(jsonInBytes)
 }
 
 func processList(w http.ResponseWriter, r *http.Request){
+    pg_con_string := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",host, port, user, password, dbname)
+    db, err := sqlx.Connect("postgres", pg_con_string)
+    if err != nil {
+        log.Fatalln(err)
+    }
+        
+    processOrder := []entity_model.Process_order{}
+    err = db.Select(&processOrder, "SELECT id, chat_id, message, create_process, is_delivery, is_delete FROM process_order WHERE is_delivery = $1 ", 0)
+    if err != nil {
+        fmt.Println(err)
+    }
+    w.Header().Set("Content-Type", "application/json")
+    jsonInBytes, _ := json.Marshal(processOrder)
+    w.Write(jsonInBytes)
 }
 
-func deliveredList(w http.ResponseWriter, r *http.Request){
-}
+// crud order
+func getDetailOrder(w http.ResponseWriter, r *http.Request){}
+func updateDetailOrder(w http.ResponseWriter, r *http.Request){}
+func deleteDetailOrder(w http.ResponseWriter, r *http.Request){}
+
+// crud process
+func getDetailProcess(w http.ResponseWriter, r *http.Request){}
+func updateDetailProcess(w http.ResponseWriter, r *http.Request){}
+func deleteDetailProcess(w http.ResponseWriter, r *http.Request){}
 
 func handleRequests() {
     // creates a new instance of a mux router
@@ -117,7 +152,12 @@ func handleRequests() {
     myRouter.HandleFunc("/loginAuth", loginAuth)
     myRouter.HandleFunc("/getOrderList", orderList)
     myRouter.HandleFunc("/getProcessList", processList)
-    myRouter.HandleFunc("/getDeliveredList", deliveredList)
+    myRouter.HandleFunc("/getDetailOrders", getDetailOrder)
+    myRouter.HandleFunc("/updateDetailOrder", updateDetailOrder)
+    myRouter.HandleFunc("/deleteDetailOrder", deleteDetailOrder)
+    myRouter.HandleFunc("/getDetailProcess", getDetailProcess)
+    myRouter.HandleFunc("/updateDetailProcess", updateDetailProcess)
+    myRouter.HandleFunc("/deleteDetailProcess", deleteDetailProcess)
 
     // port application
     log.Fatal(http.ListenAndServe(port_app, myRouter))
